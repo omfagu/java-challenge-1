@@ -25,9 +25,28 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Cart getCartByCustomerId(Long customerId) {
-        return cartRepository.findByCustomerId(customerId)
+    public void emptyCart(Long customerId) {
+        Cart cart = cartRepository.findByCustomerId(customerId)
                 .orElseThrow(() -> new RuntimeException("Cart not found for customer with ID: " + customerId));
+
+        cart.getCartItems().clear();
+        cart.setTotalPrice(0.0);
+        cartRepository.save(cart);
+    }
+
+
+    @Override
+    public Cart getCartByCustomerId(Long customerId) {
+        Cart cart = cartRepository.findByCustomerId(customerId)
+                .orElseThrow(() -> new RuntimeException("Cart not found for customer with ID: " + customerId));
+
+
+        double totalPrice = cart.getCartItems().stream()
+                .mapToDouble(cartItem -> cartItem.getProduct().getPrice() * cartItem.getQuantity())
+                .sum();
+        cart.setTotalPrice(totalPrice);
+
+        return cart;
     }
 
     @Override
@@ -42,15 +61,6 @@ public class CartServiceImpl implements CartService {
         return updatedCart;
     }
 
-    @Override
-    public void emptyCart(Long cartId) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new RuntimeException("Cart not found with ID: " + cartId));
-
-        cart.getCartItems().clear();
-        cart.setTotalPrice(0.0);
-        cartRepository.save(cart);
-    }
 
     @Override
     public Cart addProductToCart(Long customerId, Long productId, int quantity) {
@@ -61,15 +71,45 @@ public class CartServiceImpl implements CartService {
             throw new RuntimeException("Not enough stock for product with ID: " + productId);
         }
 
-        CartItem cartItem = addItem(cart, product, quantity);
-        cartItemRepository.save(cartItem);
-        product.setStock(product.getStock() - quantity);
+        CartItem cartItem = new CartItem();
+        cartItem.setProduct(product);
+        cartItem.setQuantity(quantity);
+        cartItem.setCart(cart);
 
-        productService.updateProduct(productId, product);
-        Cart updatedCart = cartRepository.save(cart);
+        cart.getCartItems().add(cartItem);
+        cart.setTotalPrice(cart.getTotalPrice() + product.getPrice() * quantity);
 
-        return updatedCart;
+        return cartRepository.save(cart);
     }
+
+    @Override
+    public Cart updateCart(Long customerId, Long productId, int quantity) {
+        Cart cart = getCartByCustomerId(customerId);
+
+        CartItem cartItem = cart.getCartItems().stream()
+                .filter(item -> item.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Product not found in cart"));
+
+        if (quantity <= 0) {
+            // Miktar sıfır veya negatifse ürünü sepetten kaldır
+            cart.getCartItems().remove(cartItem);
+        } else {
+            // Ürünün miktarını güncelle
+            cartItem.setQuantity(quantity);
+            cartItemRepository.save(cartItem);
+        }
+
+        // Sepetin toplam fiyatını yeniden hesapla
+        double totalPrice = cart.getCartItems().stream()
+                .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
+                .sum();
+        cart.setTotalPrice(totalPrice);
+
+        return cartRepository.save(cart);
+    }
+
+
 
     private CartItem addItem(Cart cart, Product product, int quantity) {
         CartItem cartItem = new CartItem();

@@ -30,4 +30,15 @@ public class CustomerController {
         List<Customer> customers = customerService.findAllCustomers();
         return ResponseEntity.ok(customers);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
+        Customer customer = customerService.getCustomerById(id);
+        return ResponseEntity.ok(customer);
+    }
+    @DeleteMapping("/{customerId}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long customerId) {
+        customerService.deleteCustomer(customerId);
+        return ResponseEntity.ok().build();
+    }
+
 }

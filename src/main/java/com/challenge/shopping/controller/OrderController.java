@@ -25,6 +25,7 @@ public class OrderController {
         this.cartService = cartService;
     }
 
+
     @PostMapping("/{customerId}/products")
     public ResponseEntity<Order> placeOrderWithProductIds(@PathVariable Long customerId, @RequestBody List<Long> productIds) {
         Order order = orderService.placeOrder(customerId, productIds);
@@ -50,7 +51,12 @@ public class OrderController {
                 .map(cartItem -> cartItem.getProduct().getId())
                 .collect(Collectors.toList());
 
+        // Sipariş oluştur
         Order order = orderService.placeOrder(customerId, productIds);
+
+        // Sepeti boşalt
+        cartService.emptyCart(cart.getId());
+
         return ResponseEntity.ok(order);
     }
 }

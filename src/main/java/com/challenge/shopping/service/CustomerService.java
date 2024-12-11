@@ -5,5 +5,11 @@ import java.util.List;
 
 public interface CustomerService {
     Customer addCustomer(Customer customer);
+
+    Customer getCustomerById(Long id);
+
     List<Customer> findAllCustomers();
+
+    void deleteCustomer(Long customerId);
+
 }

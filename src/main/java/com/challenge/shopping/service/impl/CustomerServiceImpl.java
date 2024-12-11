@@ -31,9 +31,20 @@ public class CustomerServiceImpl implements CustomerService {
 
         return customer;
     }
+    @Override
+    public Customer getCustomerById(Long id) {
+        return customerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + id));
+    }
+
 
     @Override
     public List<Customer> findAllCustomers() {
         return customerRepository.findAll();
+    }
+
+    @Override
+    public void deleteCustomer(Long customerId) {
+
     }
 }

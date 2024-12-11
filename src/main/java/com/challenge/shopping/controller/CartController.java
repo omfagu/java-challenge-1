@@ -34,10 +34,20 @@ public class CartController {
         Cart updatedCart = cartService.removeProductFromCart(customerId, productId);
         return ResponseEntity.ok(updatedCart);
     }
+    @PutMapping("/{customerId}/update")
+    public ResponseEntity<Cart> updateCart(
+            @PathVariable Long customerId,
+            @RequestParam Long productId,
+            @RequestParam int quantity) {
+        Cart updatedCart = cartService.updateCart(customerId, productId, quantity);
+        return ResponseEntity.ok(updatedCart);
+    }
+
 
     @PostMapping("/{customerId}/empty")
     public ResponseEntity<Void> emptyCart(@PathVariable Long customerId) {
         cartService.emptyCart(customerId);
         return ResponseEntity.ok().build();
     }
+
 }
